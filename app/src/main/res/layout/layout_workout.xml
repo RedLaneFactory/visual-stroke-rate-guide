@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
 >
 
+
     <LinearLayout
         android:layout_height="match_parent"
         android:layout_width="match_parent"
@@ -31,6 +32,16 @@
                 android:background="@drawable/progress"
                 />
         </FrameLayout>
+
+        <ProgressBar
+            android:id="@+id/progress_bar_leen"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:max="800"
+            android:progress="400"
+            android:layout_weight="1"
+            android:progressDrawable="@drawable/vertical_progress_bar" />
 
         <androidx.gridlayout.widget.GridLayout
             android:id="@+id/workout_grid"
