@@ -17,12 +17,14 @@ package svenmeier.coxswain;
 
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.app.PictureInPictureParams;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Rational;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ProgressBar;
@@ -124,6 +126,11 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 		gridView = findViewById(R.id.workout_grid);
 		strokeGuide = findViewById(R.id.stroke_guide);
 		writeToGrid();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			setPictureInPictureParams(new PictureInPictureParams.Builder()
+					.setAspectRatio(new Rational(100, 239))
+					.build());
+		}
 	}
 
 	private void writeToGrid() {
