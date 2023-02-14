@@ -94,8 +94,8 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 
 	private LevelView progressView;
 
-	private ProgressBar strokeGuide;
-	private Thread strokeGuideUpdate;
+	private ProgressBar strokeRythmBar;
+	private Thread strokeRythm;
 	private int previousStrokeRate;
 
 	private Runnable returnToLeanBack = new Runnable() {
@@ -124,7 +124,7 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 		segmentsView.setData(new SegmentsData(gym.program));
 		progressView = findViewById(R.id.workout_progress);
 		gridView = findViewById(R.id.workout_grid);
-		strokeGuide = findViewById(R.id.stroke_guide);
+		strokeRythmBar = findViewById(R.id.stroke_guide);
 		writeToGrid();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			setPictureInPictureParams(new PictureInPictureParams.Builder()
@@ -235,7 +235,9 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 		bindingPreference.setList(bindings);
 
 		paceBoat = null;
-		strokeGuideUpdate.interrupt();
+		if(strokeRythm!= null) {
+			strokeRythm.interrupt();
+		}
 
 		super.onDestroy();
 	}
@@ -252,7 +254,9 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 	@Override
 	protected void onStop() {
 		gym.removeListener(this);
-		strokeGuideUpdate.interrupt();
+		if(strokeRythm!= null) {
+			strokeRythm.interrupt();
+		}
 		super.onStop();
 	}
 
@@ -322,20 +326,20 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 		if(progress!= null && progress.segment != null && progress.segment.strokeRate!=null) {
 			int strokeRate = progress.segment.strokeRate.get();
 			if(previousStrokeRate != strokeRate) {
-				if(strokeGuideUpdate != null) {
-					strokeGuideUpdate.interrupt();
+				if(strokeRythm != null) {
+					strokeRythm.interrupt();
 				}
-				startBackgroundThread(strokeGuide, strokeRate);
+				startStrokeRythmUpdate(strokeRythmBar, strokeRate);
 				previousStrokeRate = strokeRate;
 			}
 		}
 	}
 
-	public void startBackgroundThread(ProgressBar spmBar, int spm) {
+	public void startStrokeRythmUpdate(ProgressBar spmBar, int spm) {
 		int interval = 60 * 1000 / spm / 2; // milliseconds in a minute divided by strokes per minute,
 		//		 divided by 2 because the bar goes up for half the time and down the other half of the time.
 
-		strokeGuideUpdate = new Thread(new Runnable() {
+		strokeRythm = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				Boolean isRunning = true;
@@ -365,7 +369,7 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 				}
 			}
 		});
-		strokeGuideUpdate.start();
+		strokeRythm.start();
 	}
 
 
