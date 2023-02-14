@@ -588,7 +588,7 @@ public class Gym {
     }
 
     /**
-     * Get the singelton Gym - has to be called on the main thread.
+     * Get the singleton Gym - has to be called on the main thread.
      */
     @UiThread
     public synchronized static Gym instance(Context context) {

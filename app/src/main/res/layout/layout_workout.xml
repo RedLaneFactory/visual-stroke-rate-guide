@@ -34,12 +34,11 @@
         </FrameLayout>
 
         <ProgressBar
-            android:id="@+id/progress_bar_leen"
+            android:id="@+id/stroke_guide"
             style="@android:style/Widget.ProgressBar.Horizontal"
             android:layout_height="match_parent"
             android:layout_width="0dp"
-            android:max="800"
-            android:progress="400"
+            android:max="100"
             android:layout_weight="1"
             android:progressDrawable="@drawable/vertical_progress_bar" />
 

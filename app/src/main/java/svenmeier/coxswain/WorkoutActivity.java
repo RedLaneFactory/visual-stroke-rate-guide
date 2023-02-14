@@ -15,6 +15,7 @@
  */
 package svenmeier.coxswain;
 
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -24,6 +25,7 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.gridlayout.widget.GridLayout;
@@ -90,6 +92,10 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 
 	private LevelView progressView;
 
+	private ProgressBar strokeGuide;
+	private Thread strokeGuideUpdate;
+	private int previousStrokeRate;
+
 	private Runnable returnToLeanBack = new Runnable() {
 		@Override
 		public void run() {
@@ -116,7 +122,7 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 		segmentsView.setData(new SegmentsData(gym.program));
 		progressView = findViewById(R.id.workout_progress);
 		gridView = findViewById(R.id.workout_grid);
-
+		strokeGuide = findViewById(R.id.stroke_guide);
 		writeToGrid();
 	}
 
@@ -222,6 +228,7 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 		bindingPreference.setList(bindings);
 
 		paceBoat = null;
+		strokeGuideUpdate.interrupt();
 
 		super.onDestroy();
 	}
@@ -238,7 +245,7 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 	@Override
 	protected void onStop() {
 		gym.removeListener(this);
-
+		strokeGuideUpdate.interrupt();
 		super.onStop();
 	}
 
@@ -304,7 +311,56 @@ public class WorkoutActivity extends AbstractActivity implements View.OnSystemUi
 			value = total;
 		}
 		progressView.setLevel(Math.round(value * 10000 / total));
+
+		if(progress!= null && progress.segment != null && progress.segment.strokeRate!=null) {
+			int strokeRate = progress.segment.strokeRate.get();
+			if(previousStrokeRate != strokeRate) {
+				if(strokeGuideUpdate != null) {
+					strokeGuideUpdate.interrupt();
+				}
+				startBackgroundThread(strokeGuide, strokeRate);
+				previousStrokeRate = strokeRate;
+			}
+		}
 	}
+
+	public void startBackgroundThread(ProgressBar spmBar, int spm) {
+		int interval = 60 * 1000 / spm / 2; // milliseconds in a minute divided by strokes per minute,
+		//		 divided by 2 because the bar goes up for half the time and down the other half of the time.
+
+		strokeGuideUpdate = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				Boolean isRunning = true;
+				Boolean goingUp = true;
+				while (isRunning) {
+					Boolean finalGoingUp = goingUp;
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+								int target = spmBar.getMax();
+							if (!finalGoingUp) {
+								target = 0;
+								}
+								ObjectAnimator animation = ObjectAnimator.ofInt(spmBar, "progress", spmBar.getProgress(), target);
+								animation.setDuration(interval);
+								animation.start();
+								//Log.d("spmBar", "inside update method " + (finalGoingUp ? "going up ": "coming down ") + "from " + spmBar.getProgress() + " to " + target + " at interval: " + interval);
+						}
+					});
+
+					goingUp = !goingUp;
+					try {
+						Thread.sleep(interval);
+					} catch (InterruptedException e) {
+						isRunning = false;
+					}
+				}
+			}
+		});
+		strokeGuideUpdate.start();
+	}
+
 
 	@Override
 	public void onBinding(int index, ValueBinding binding) {
